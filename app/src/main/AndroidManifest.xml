@@ -15,8 +15,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!--为crime添加了左右翻页效果，这个是旧的CrimeActivity-->
         <!--<activity android:name=".Activity.CrimeActivity"></activity>-->
-        <activity android:name=".Activity.CrimePagerActivity"></activity>
+        <!--这里添加了parentActivityName作为回退方法。这和按back键不同。-->
+        <!--back键是从回退栈里逐个退出。而按左上角的层级导航键，可以直接退掉多个Activity，-->
+        <!--直接回到想去的Activity-->
+        <activity
+            android:name=".Activity.CrimePagerActivity"
+            android:parentActivityName=".Activity.CrimeListActivity">
+        </activity>
     </application>
 
 </manifest>

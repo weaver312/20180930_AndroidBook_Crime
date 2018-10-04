@@ -5,14 +5,30 @@ import java.util.UUID;
 
 public class Crime {
 
+    // 注意，这里更新的字段要在Schema里同步更新
     private UUID mId;
     private String mTitle;
     private Date mDate;
     private boolean mSolved;
+    private String mSuspect;
+    // 注意，这里更新的字段要在Schema里同步更新
 
     public Crime() {
         mId = UUID.randomUUID();
         mDate = new Date();
+    }
+
+    public Crime(UUID id) {
+        mId = id;
+        mDate = new Date();
+    }
+
+    public String getSuspect() {
+        return mSuspect;
+    }
+
+    public void setSuspect(String suspect) {
+        mSuspect = suspect;
     }
 
     public UUID getId() {

@@ -4,5 +4,28 @@
     <string name="crime_title_label">Title</string>
     <string name="crime_details_label">Details</string>
     <string name="crime_solved_label">Solved</string>
+    <string name="crime_delete">DELETE CRIME</string>
+    <string name="crime_listempty">List Is Empty</string>
+
     <string name="date_picker_title">Date of crime:</string>
+
+    <!--第十三章，修改上面的标题栏-->
+    <string name="new_crime">New_Crime</string>
+    <string name="show_subtitle">Show Subtitle</string>
+    <string name="hide_subtitle">Hide Subtitle</string>
+    <!--这里通配符的使用方法值得学习一下-->
+    <string name="subtitle_format">%1$d crimes</string>
+
+    <string name="crime_suspect_text">Choose Suspect</string>
+    <string name="crime_report_text">Send Crime Report</string>
+    <string name="crime_report">
+        The crime was dicovered on %1$s. %3$s, and %4$s
+    </string>
+    <string name="crime_report_solved">The case is solved</string>
+    <string name="crime_report_unsolved">The case is not solved</string>
+    <string name="crime_report_no_suspect">there is no suspect.</string>
+    <string name="crime_report_suspect">the suspect is %s.</string>
+    <string name="crime_report_subject">CriminalIntent Crime Report</string>
+    <string name="send_report">Sendcrime report via</string>
+
 </resources>

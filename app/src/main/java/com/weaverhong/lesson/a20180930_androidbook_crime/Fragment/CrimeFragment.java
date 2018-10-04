@@ -1,10 +1,18 @@
 package com.weaverhong.lesson.a20180930_androidbook_crime.Fragment;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.print.PrinterId;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,11 +21,11 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
-import com.weaverhong.lesson.a20180930_androidbook_crime.Activity.CrimeActivity;
 import com.weaverhong.lesson.a20180930_androidbook_crime.Model.Crime;
 import com.weaverhong.lesson.a20180930_androidbook_crime.Model.CrimeLab;
 import com.weaverhong.lesson.a20180930_androidbook_crime.R;
 
+import java.util.Date;
 import java.util.UUID;
 
 import static android.widget.CompoundButton.*;
@@ -27,10 +35,17 @@ public class CrimeFragment extends Fragment {
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
 
+    private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_CONTACT = 1;
+
     private Crime mCrime;
     private EditText mTitleField;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
+    private Button mDeleteButton;
+    private CrimeLab mCrimeLab;
+    private Button mSuspectButton;
+    private Button mReportButton;
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -62,6 +77,14 @@ public class CrimeFragment extends Fragment {
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+
+        CrimeLab.get(getActivity())
+                .updateCrime(mCrime);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
@@ -86,13 +109,20 @@ public class CrimeFragment extends Fragment {
         });
 
         mDateButton = (Button) v.findViewById(R.id.crime_date);
-        mDateButton.setText(mCrime.getDate().toString());
+        updateDate();
         // mDateButton.setEnabled(false);
+        // 新的行为，这本来就是一个fragment，现在通过这个fragment调起另一个fragment
         mDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FragmentManager manager = getFragmentManager();
-                DatePickerFragment dialog = new DatePickerFragment();
+                // 直接创建一个DatePicker：
+                // DatePickerFragment dialog = new DatePickerFragment();
+                // 通过newInstance传入需要的值的创建：
+                DatePickerFragment dialog = DatePickerFragment
+                        .newInstance(mCrime.getDate());
+                // 注意这里不能单纯用 this 了，这里是Listener内部，this指的是Listener而非Fragment
+                dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
                 dialog.show(manager, DIALOG_DATE);
             }
         });
@@ -106,6 +136,135 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+        mCrimeLab = CrimeLab.get(getActivity());
+
+        mDeleteButton = (Button) v.findViewById(R.id.crime_delete);
+        mDeleteButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCrimeLab.delCrime(mCrime.getId());
+                getActivity().finish();
+            }
+        });
+
+        mReportButton = (Button) v.findViewById(R.id.crime_report);
+        mReportButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 隐式Intent构造：
+                // 要执行的操作，SEND表示发送邮件
+                Intent i = new Intent(Intent.ACTION_SEND);
+                // 数据类型，可以是html、mpeg等
+                i.setType("text/plain");
+                // 置入Extras
+                i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
+                i.putExtra(Intent.EXTRA_SUBJECT,
+                        getString(R.string.crime_report_subject));
+
+                i = Intent.createChooser(i, getString(R.string.send_report));
+                startActivity(i);
+            }
+        });
+
+        final Intent pickContact = new Intent(Intent.ACTION_PICK,
+                ContactsContract.Contacts.CONTENT_URI);
+        // pickContact.addCategory(Intent.CATEGORY_HOME);
+        mSuspectButton = (Button) v.findViewById(R.id.crime_suspect);
+        mSuspectButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(pickContact, REQUEST_CONTACT);
+            }
+        });
+
+        if (mCrime.getSuspect() != null) {
+            mSuspectButton.setText(mCrime.getSuspect());
+        }
+
+        // 检查是否有联系人应用，因为如果没有的话应用会崩溃
+        // PackageManager类知道设备上安装的所有组件和Activity
+        PackageManager packageManager = getActivity().getPackageManager();
+        if (packageManager.resolveActivity(pickContact,
+                PackageManager.MATCH_DEFAULT_ONLY) == null) {
+            // 没有对应应用，就会把按钮调回不可用模式
+            mSuspectButton.setEnabled(false);
+        }
+
         return v;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // resultCode就是那个有三种的：OK、Negative、Neutral
+        // 私以为可以在request之后再判断resultCode
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+
+        // 这个 RequestCode 很有用，如果CrimeFragment发起了多个子Fragment并都要求返回内容
+        // 这时就需要用requestCode判断是谁发回了结果
+        if (requestCode == REQUEST_DATE) {
+            Date date = (Date) data
+                    .getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+            mCrime.setDate(date);
+            // 对持久层进行修改，保证改后的日期能传递到首页CrimeListFragment中
+            updateDate();
+        }
+
+        // 新添加，对联系人隐式Intent返回数据的处理
+        if (requestCode == REQUEST_CONTACT && data != null) {
+            Uri contactUri = data.getData();
+            // 表示我只要获得联系人名字就可以
+            // 这里用的太简单了，更复杂的用法参考developer.android.com
+            String[] queryfields = new String[] {
+                    ContactsContract.Contacts.DISPLAY_NAME
+            };
+            // 用cursor才能获取需要的数据，这里倒是很像SQLite里的操作
+            Cursor c = getActivity().getContentResolver()
+                    .query(contactUri, queryfields, null, null, null);
+            try {
+                // 反复检查是否获得了结果
+                if (c.getCount() == 0) {
+                    return;
+                }
+
+                // 拉出第一条作为返回
+                // 哈哈哈这里和我用Hibernate时候一样，虽然查的是一个值，但一
+                // 返回就是一个List，然后我只好get(index=0)来取出结果
+                c.moveToFirst();
+                // 这里第一个结果下标也是零
+                // 看来天下ORM是一家，所以干啥要这么多轮子
+                String suspect = c.getString(0);
+                mCrime.setSuspect(suspect);
+                mSuspectButton.setText(suspect);
+            } finally {
+                c.close();
+            }
+        }
+    }
+
+    private void updateDate() {
+        mDateButton.setText(mCrime.getDate().toString());
+    }
+
+    private String getCrimeReport() {
+        String solvedString = null;
+        if (mCrime.isSolved()) {
+            solvedString = getString(R.string.crime_report_solved);
+        } else {
+            solvedString = getString(R.string.crime_report_unsolved);
+        }
+
+        String dateFormat = "EEE, MMM dd";
+        String dateString = DateFormat.format(dateFormat, mCrime.getDate()).toString();
+
+        String suspect = mCrime.getSuspect();
+        if (suspect == null) {
+            suspect = getString(R.string.crime_report_no_suspect);
+        } else {
+            suspect = getString(R.string.crime_report_suspect, suspect);
+        }
+
+        return "REPORT: " + suspect;
     }
 }

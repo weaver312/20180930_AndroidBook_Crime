@@ -3,9 +3,13 @@ package com.weaverhong.lesson.a20180930_androidbook_crime.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -25,10 +29,20 @@ import java.util.List;
 public class CrimeListFragment extends Fragment {
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    private boolean mSubtitleVisible;
+
+    private View view;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // 如果不设置为true的话，菜单栏就不会显示任何的按钮
+        setHasOptionsMenu(true);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
+        view = inflater.inflate(R.layout.fragment_crime_list, container, false);
 
         mCrimeRecyclerView = (RecyclerView) view.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -42,10 +56,25 @@ public class CrimeListFragment extends Fragment {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
 
+        if (crimes.size() == 0) {
+            view.findViewById(R.id.crime_listhint).setVisibility(View.VISIBLE);
+            view.findViewById(R.id.crime_recycler_view).setVisibility(View.INVISIBLE);
+            return;
+        } else {
+            view.findViewById(R.id.crime_recycler_view).setVisibility(View.VISIBLE);
+            view.findViewById(R.id.crime_listhint).setVisibility(View.INVISIBLE);
+        }
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
+            // 加入SQLite后，更新要有这个新的步骤，把新的crimes更新到Adapter，
+            // 然后Adapter传递给ListView中
+            // 因为在大约57行调用的crimeLab.getCrimes经过了修改，使用了CursorWrapper
+            // 从SQLite里取数据。
+            // 而原先的CrimeLab则是
+            mAdapter.setCrimes(crimes);
+
             // 这个方法不够高效，可以定位然后刷新指定位置的数据
             mAdapter.notifyDataSetChanged();
         }
@@ -53,12 +82,64 @@ public class CrimeListFragment extends Fragment {
         // 因为我是控制层，所以我要把数据传给视图层。这里Adapter就是视图层的适配。
         mAdapter = new CrimeAdapter(crimes);
         mCrimeRecyclerView.setAdapter(mAdapter);
+
+        updateSubtitle();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         updateUI();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_crime_list, menu);
+
+        MenuItem subtitleItem = menu.findItem(R.id.show_subtitle);
+        if (mSubtitleVisible) {
+            subtitleItem.setTitle(R.string.hide_subtitle);
+        } else {
+            subtitleItem.setTitle(R.string.show_subtitle);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.new_crime:
+                // 如果点击新建项目的按键
+                Crime crime = new Crime();
+                CrimeLab.get(getActivity()).addCrime(crime);
+                // 因为是从Activity/Fragment启动Activity，所以用newIntent而非newInstance
+                // 如果是启动Fragment，用newInstance
+                Intent intent = CrimePagerActivity
+                        .newIntent(getActivity(), crime.getId());
+                startActivity(intent);
+                return true;
+            case R.id.show_subtitle:
+                mSubtitleVisible = !mSubtitleVisible;
+                getActivity().invalidateOptionsMenu();
+                updateSubtitle();
+                return true;
+            default:
+                // 默认不处理
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void updateSubtitle() {
+        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        int crimeCount = crimeLab.getCrimes().size();
+        String subtitle = getString(R.string.subtitle_format, crimeCount);
+
+        if (!mSubtitleVisible) {
+            subtitle = null;
+        }
+
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
     // 一个私有View
@@ -129,6 +210,10 @@ public class CrimeListFragment extends Fragment {
         public int getItemCount() {
             // 适配器第三个方法：返回list的总数
             return mCrimes.size();
+        }
+
+        public void setCrimes(List<Crime> crimes) {
+            mCrimes = crimes;
         }
     }
 }

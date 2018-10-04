@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--注意这里有xmlns:app的命名空间，这是为了兼容性，操作栏是Android3.0才引进的。-->
+<!--xmlns:app空间让更老的版本也能在加入AppCompat后使用操作栏-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--下面这个 showAsAction 属性的功能室指定菜单栏要显示在工具栏上，还是在溢出菜单中-->
+    <!--这里的组合值表示，只要空间足够，图标和文字描述都会显示在工具栏上-->
+    <!--如果不够，就只显示图标；如果还不够，就都隐藏到溢出菜单中-->
+    <!--除了ifRoom和withText、它还有always和never两个属性-->
+
+    <!--这里的icon使用了android资源，极大方便我们快速搭建简单原型、统一格式-->
+    <!--如果用自己的image，可以在AS里用New ==> Image Asset，然后AS会提供一个图片剪裁器-->
+    <!--android:icon="@android:drawable/ic_menu_add"-->
+
+    <item
+        android:id="@+id/new_crime"
+        android:icon="@drawable/ic_menu_add"
+        android:title="@string/new_crime"
+        app:showAsAction="ifRoom|withText"/>
+
+    <item
+        android:id="@+id/show_subtitle"
+        android:title="@string/show_subtitle"
+        app:showAsAction="ifRoom"/>
+</menu>
