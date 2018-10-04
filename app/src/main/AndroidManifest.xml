@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.weaverhong.lesson.a20180930_androidbook_crime">
-
+    <!--这里的android:required意思是必须有。当它被设为true，-->
+    <!--意思就是如果没有这个功能那应用程序就用不了了-->
+    <uses-feature
+        android:name="android.hardware.camera2"
+        android:required="false"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -24,6 +28,15 @@
             android:name=".Activity.CrimePagerActivity"
             android:parentActivityName=".Activity.CrimeListActivity">
         </activity>
+        <provider
+            android:exported="false"
+            android:grantUriPermissions="true"
+            android:authorities="com.weaverhong.lesson.a20180930_androidbook_crime.fileprovider"
+            android:name="android.support.v4.content.FileProvider">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/files"/>
+        </provider>
     </application>
 
 </manifest>

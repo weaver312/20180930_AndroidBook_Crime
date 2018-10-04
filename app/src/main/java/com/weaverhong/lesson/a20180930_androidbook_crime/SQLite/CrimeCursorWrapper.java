@@ -1,10 +1,10 @@
-package com.weaverhong.lesson.a20180930_androidbook_crime;
+package com.weaverhong.lesson.a20180930_androidbook_crime.SQLite;
 
 import android.database.Cursor;
 import android.database.CursorWrapper;
 
 import com.weaverhong.lesson.a20180930_androidbook_crime.Model.Crime;
-import com.weaverhong.lesson.a20180930_androidbook_crime.Model.CrimeDbSchema.CrimeTable;
+import com.weaverhong.lesson.a20180930_androidbook_crime.SQLite.CrimeDbSchema.CrimeTable;
 
 import java.util.Date;
 import java.util.UUID;

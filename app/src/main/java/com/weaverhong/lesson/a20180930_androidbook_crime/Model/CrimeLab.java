@@ -5,10 +5,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.weaverhong.lesson.a20180930_androidbook_crime.CrimeBaseHelper;
-import com.weaverhong.lesson.a20180930_androidbook_crime.CrimeCursorWrapper;
-import com.weaverhong.lesson.a20180930_androidbook_crime.Model.CrimeDbSchema.CrimeTable;
+import com.weaverhong.lesson.a20180930_androidbook_crime.SQLite.CrimeBaseHelper;
+import com.weaverhong.lesson.a20180930_androidbook_crime.SQLite.CrimeCursorWrapper;
+import com.weaverhong.lesson.a20180930_androidbook_crime.SQLite.CrimeDbSchema.CrimeTable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -89,6 +90,11 @@ public class CrimeLab {
             cursor.close();
         }
         // return null;
+    }
+
+    public File getPhotoFile(Crime crime) {
+        File filesDir = mContext.getFilesDir();
+        return new File(filesDir, crime.getPhotoFilename());
     }
 
     public void updateCrime(Crime crime) {

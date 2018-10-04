@@ -13,6 +13,10 @@ public class Crime {
     private String mSuspect;
     // 注意，这里更新的字段要在Schema里同步更新
 
+    public String getPhotoFilename() {
+        return "CRIMEIMG_" + getId().toString() + ".jpg";
+    }
+
     public Crime() {
         mId = UUID.randomUUID();
         mDate = new Date();

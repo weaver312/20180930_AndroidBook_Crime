@@ -1,4 +1,4 @@
-package com.weaverhong.lesson.a20180930_androidbook_crime.Model;
+package com.weaverhong.lesson.a20180930_androidbook_crime.SQLite;
 
 // 该类的作用是，描述CrimeTable的表名、各列的列名
 // schema意为计划、图表

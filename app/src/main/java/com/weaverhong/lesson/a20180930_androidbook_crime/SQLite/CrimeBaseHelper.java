@@ -1,10 +1,10 @@
-package com.weaverhong.lesson.a20180930_androidbook_crime;
+package com.weaverhong.lesson.a20180930_androidbook_crime.SQLite;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.weaverhong.lesson.a20180930_androidbook_crime.Model.CrimeDbSchema.CrimeTable;
+import com.weaverhong.lesson.a20180930_androidbook_crime.SQLite.CrimeDbSchema.CrimeTable;
 
 public class CrimeBaseHelper extends SQLiteOpenHelper {
     private static final int VERSION = 1;

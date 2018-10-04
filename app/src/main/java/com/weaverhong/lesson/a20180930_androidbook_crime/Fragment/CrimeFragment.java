@@ -3,13 +3,18 @@ package com.weaverhong.lesson.a20180930_androidbook_crime.Fragment;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelUuid;
 import android.print.PrinterId;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -20,12 +25,17 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 
+import com.weaverhong.lesson.a20180930_androidbook_crime.Bitmap.PictureUtils;
 import com.weaverhong.lesson.a20180930_androidbook_crime.Model.Crime;
 import com.weaverhong.lesson.a20180930_androidbook_crime.Model.CrimeLab;
 import com.weaverhong.lesson.a20180930_androidbook_crime.R;
 
+import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import static android.widget.CompoundButton.*;
@@ -37,8 +47,10 @@ public class CrimeFragment extends Fragment {
 
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_CONTACT = 1;
+    private static final int REQUEST_PHOTO = 2;
 
     private Crime mCrime;
+    private File mPhotoFile;
     private EditText mTitleField;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
@@ -46,6 +58,8 @@ public class CrimeFragment extends Fragment {
     private CrimeLab mCrimeLab;
     private Button mSuspectButton;
     private Button mReportButton;
+    private ImageButton mPhotoButton;
+    private ImageView mPhotoView;
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -74,6 +88,7 @@ public class CrimeFragment extends Fragment {
         // 通过Argument组件实现从下至上，从Fragment到Activity的信息获取
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime);
     }
 
     @Override
@@ -190,6 +205,39 @@ public class CrimeFragment extends Fragment {
             mSuspectButton.setEnabled(false);
         }
 
+        mPhotoButton = (ImageButton) v.findViewById(R.id.crime_camera);
+        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        boolean canTakePhoto = mPhotoFile != null &&
+                captureImage.resolveActivity(packageManager) != null;
+        mPhotoButton.setEnabled(canTakePhoto);
+
+        mPhotoButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 告诉相机，我的URI是这个，你照完相直接写到这个URI里
+                Uri uri = FileProvider.getUriForFile(getActivity(),
+                        "com.weaverhong.lesson.a20180930_androidbook_crime.fileprovider",
+                        mPhotoFile);
+                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+
+                // 找到一个可用的相机Activity
+                List<ResolveInfo> cameraActivities = getActivity()
+                        .getPackageManager().queryIntentActivities(captureImage,
+                                PackageManager.MATCH_DEFAULT_ONLY);
+
+                // 给相机写图片的权限，这个很重要
+                for (ResolveInfo activity : cameraActivities) {
+                    getActivity().grantUriPermission(activity.activityInfo.packageName,
+                            uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+            }
+        });
+
+        mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
+        updatePhotoView();
+
         return v;
     }
 
@@ -241,6 +289,18 @@ public class CrimeFragment extends Fragment {
                 c.close();
             }
         }
+
+        // 新添加，对PHOTO返回来的数据处理
+        if (requestCode == REQUEST_PHOTO && data !=null) {
+            Uri uri = FileProvider.getUriForFile(getActivity(),
+                    "com.weaverhong.lesson.a20180930_androidbook_crime.fileprovider",
+                    mPhotoFile);
+
+            getActivity().revokeUriPermission(uri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+            updatePhotoView();
+        }
     }
 
     private void updateDate() {
@@ -266,5 +326,15 @@ public class CrimeFragment extends Fragment {
         }
 
         return "REPORT: " + suspect;
+    }
+
+    private void updatePhotoView() {
+        if (mPhotoFile == null || !mPhotoFile.exists()) {
+            mPhotoView.setImageDrawable(null);
+        } else {
+            Bitmap bitmap = PictureUtils.getScaledBitmap(
+                    mPhotoFile.getPath(), getActivity());
+            mPhotoView.setImageBitmap(bitmap);
+        }
     }
 }
