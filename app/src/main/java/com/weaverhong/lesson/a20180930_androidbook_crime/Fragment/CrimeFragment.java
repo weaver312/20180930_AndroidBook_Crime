@@ -88,6 +88,8 @@ public class CrimeFragment extends Fragment {
         // 通过Argument组件实现从下至上，从Fragment到Activity的信息获取
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        // 访问持久层，获得所需图像
+        // 注意这里传递的是mCrime，可以尽量避免对上层的修改，只要在下面持久层改改改就凑活能用了
         mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime);
     }
 
@@ -206,10 +208,12 @@ public class CrimeFragment extends Fragment {
         }
 
         mPhotoButton = (ImageButton) v.findViewById(R.id.crime_camera);
+        // 隐式Intent。控制器在这里像一个十字路口，交汇了各个资源
         final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
+        // 保证mPhotoFile存在且拿到了相机
         boolean canTakePhoto = mPhotoFile != null &&
                 captureImage.resolveActivity(packageManager) != null;
+        // 开启照相按钮
         mPhotoButton.setEnabled(canTakePhoto);
 
         mPhotoButton.setOnClickListener(new OnClickListener() {
@@ -219,9 +223,10 @@ public class CrimeFragment extends Fragment {
                 Uri uri = FileProvider.getUriForFile(getActivity(),
                         "com.weaverhong.lesson.a20180930_androidbook_crime.fileprovider",
                         mPhotoFile);
+                // 把告诉的话放进Intent
                 captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
 
-                // 找到一个可用的相机Activity
+                // 找到一个默认的相机Activity
                 List<ResolveInfo> cameraActivities = getActivity()
                         .getPackageManager().queryIntentActivities(captureImage,
                                 PackageManager.MATCH_DEFAULT_ONLY);
@@ -231,7 +236,9 @@ public class CrimeFragment extends Fragment {
                     getActivity().grantUriPermission(activity.activityInfo.packageName,
                             uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 }
+                // 开启相机，并希望返回一个照片
                 startActivityForResult(captureImage, REQUEST_PHOTO);
+                // OK，接下来的任务就都在onActivityResult()方法里面了
             }
         });
 

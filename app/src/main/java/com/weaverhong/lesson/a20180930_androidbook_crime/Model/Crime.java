@@ -13,6 +13,7 @@ public class Crime {
     private String mSuspect;
     // 注意，这里更新的字段要在Schema里同步更新
 
+    // 这个转换方法放到这里，纯粹是因为与持久层相关，没地方放，就放这儿了
     public String getPhotoFilename() {
         return "CRIMEIMG_" + getId().toString() + ".jpg";
     }

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--这里的path是单点，表示直接存储在files目录下（因为fileprovider只能操作files目录作为root目录）-->
     <files-path name="crime_photos" path="."/>
 </paths>

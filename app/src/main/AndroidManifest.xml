@@ -28,11 +28,20 @@
             android:name=".Activity.CrimePagerActivity"
             android:parentActivityName=".Activity.CrimeListActivity">
         </activity>
+
+        <!--要添加分享给其他应用文件，或从其他应用获取文件的功能，要写一个provider-->
+        <!--android:experted=false表示不允许其他人使用FileProvider-->
+        <!--android:grantUriPermissions表示允许使用下面的authorities作为URI进行写读操作-->
+        <!--android:authorities相当于文件的URI，定位了文件的存储位置-->
+        <!--android:name表示这是一个FileProvider-->
         <provider
             android:exported="false"
             android:grantUriPermissions="true"
             android:authorities="com.weaverhong.lesson.a20180930_androidbook_crime.fileprovider"
             android:name="android.support.v4.content.FileProvider">
+            <!--告诉provider，URI对应的物理地址在哪，是很重要的-->
+            <!--这里统一归在一个files.xml中，很方便统一修改使用-->
+            <!--不过还是很奇怪，这个文件只对应这一个meta-data么？如果files.xml里有多个file标签怎么办？-->
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/files"/>
